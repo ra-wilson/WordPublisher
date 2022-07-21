@@ -9,7 +9,7 @@ Steps to download and run:
 3. Run `git clone https://github.com/ash-williams/fsd_blog_engine_server`
 4. Once the project has finished downloading, navigate into the projects root directory `cd fsd_blog_engine_server`
 5. Run `npm install` to install all dependencies for the project
-6. Once the dependencies have installed, run the server using `npm run dev`
+6. Once the dependencies have installed, run the server using `npm run dev`. You will see a message saying that the server is running on port 3333.
 7. In a **separate terminal window** navigate to the projects root directory and run `npm test` to run the tests. The tests will all fail, but that is because we have not yet written any code.
 
 Once you have completed the above, you are set up and ready to begin work on the assignment.
