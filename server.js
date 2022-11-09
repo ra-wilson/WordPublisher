@@ -16,6 +16,12 @@ app.listen(HTTP_PORT, () => {
 // Logging
 app.use(morgan('tiny'));
 
+const logger =  (req, res, next) => {
+    console.log("INCOMING REQUEST: " + req.method + " " + req.path);
+    next();
+}
+
+
 // Body parser
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -26,6 +32,9 @@ app.get("/", (req, res, next) => {
 });
 
 // Other API endpoints: Links go here...
+require("./app/routes/article-routes")(app);
+require("./app/routes/user-routes")(app);
+require("./app/routes/comment-routes")(app);
 
 
 // Default response for any other request
