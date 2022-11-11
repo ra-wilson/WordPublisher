@@ -34,7 +34,7 @@ app.get("/", (req, res, next) => {
 // Other API endpoints: Links go here...
 require("./app/routes/article-routes")(app);
 require("./app/routes/user-routes")(app);
-require("./app/routes/comment-routes")(app);
+// require("./app/routes/comment-routes")(app);
 
 
 // Default response for any other request
