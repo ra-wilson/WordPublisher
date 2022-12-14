@@ -1,32 +1,54 @@
- const Joi = require('Joi');
- const comments = require('../models/comments-model');
+const db = require("../../database.js");
+const Joi = require("joi");
+const auth = require("../lib/middleware");
+const { doesNotThrow } = require("assert");
 
+const addNewComment = (comment, article_id, done) => {
+  let date = Date.now();
 
-    const create = (req, res, next) => {
-        const schema = Joi.object({
-            author: Joi.string().required(),
-            comment_text: Joi.string().required,
-            article_text: Joi.text().required(),
+  const sql =
+    "INSERT INTO comments (comment_text, date_published, article_id) VALUES (?,?,?)";
+  let values = [comment.comment_text, date, article_id];
 
+  db.run(sql, values, function (err) {
+    if (err) return done(err);
 
-        });
-        console.log(schema.validate(req.body));
-    
-        const { error } = schema.validate(req.body);
-         
-        console.log(error);
-    
-        if (error) return res.status(400).send(error.details[0].message);
-        
-        let article = Object.assign({}, req.body);
-    
-        item.addNewArticle(article, (error, id) => {
-            if (error) return res.sendStatus(500);
-            return res.status(201).send({article_id: id})
-        })
-    } 
+    return done(null, this.lastID);
+  });
+};
 
-    const getAll = (req, res, next) => {
-        
+const getAllComments = (done) => {
+  const results = [];
+
+  db.each(
+    "SELECT * FROM comments WHERE article_id =?",
+    [],
+    (err, row) => {
+      if (err) console.log("Something isn't right" + err);
+      results.push({
+        comment_text: row.comment_text,
+        comment_id: row.comment_id,
+        article_id: row.article_id,
+        date_published: new Date(row.date_published).toLocaleDateString(),
+      });
+    },
+    (err, num_rows) => {
+      return done(err, num_rows, results);
     }
-    
+  );
+};
+
+const deleteComment = (id, done) => {
+  let query = "DELETE FROM comments WHERE comment_id=?";
+
+  db.run(query, [id], (err) => {
+    if (err) return done(err);
+    return done(null);
+  });
+};
+
+module.exports = {
+  getAllComments: getAllComments,
+  addNewComment: addNewComment,
+  deleteComment: deleteComment,
+};

@@ -9,7 +9,7 @@ const getAll = (req, res) => {
   });
 };
 
-const create = (req, res) => {
+const create = (req, res, next) => {
   const schema = Joi.object({
     title: Joi.string().required(),
     author: Joi.string().required(),
@@ -35,22 +35,28 @@ const getOne = (req, res) => {
   let article_id = parseInt(req.params.article_id);
 
   articles.getArticle(article_id, (err, result) => {
-    if (err == 404) {
+    if (err === 404) {
       console.log(err);
       return res.sendStatus(404);
     }
+    if (err) return res.sendStatus(500);
 
     return res.status(200).send(result);
   });
 };
 
-const editArticle = (req, res, next) => {
+const editArticle = (req, res) => {
   let article_id = parseInt(req.params.article_id);
 
   articles.getArticle(article_id, (err, result) => {
-    if (err === 404) return res.sendStatus(404);
+    if (err === 404) {
+      console.log(err);
+      return res.sendStatus(404);
+    }
     if (err) return res.sendStatus(500);
 
+    // console.log(article_id, "here");
+    // return res.sendStatus(200);
     const schema = Joi.object({
       title: Joi.string(),
       article_text: Joi.string(),
@@ -60,50 +66,38 @@ const editArticle = (req, res, next) => {
     const { error } = schema.validate(req.body);
     if (error) return res.status(400).send(error.details[0].message);
 
+    if (req.body.hasOwnProperty("author")) {
+      result.author = req.body.author;
+    }
     if (req.body.hasOwnProperty("title")) {
       result.title = req.body.title;
     }
     if (req.body.hasOwnProperty("article_text")) {
       result.article_text = req.body.article_text;
     }
-    if (req.body.hasOwnProperty("author")) {
-      result.author = req.body.author;
-    }
     articles.editArticle(article_id, result, (err, id) => {
-      if (err) {
-        console.log(err);
-        return res.sendStatus(500);
-      }
+      if (err === 404) return res.sendStatus(404);
+
+      if (err) return res.sendStatus(500);
+
+      return res.status(200).send({ article_id: id + "has been edited." });
     });
   });
 };
 
 const deleteArticle = (req, res, next) => {
-  let id = parseInt(req.params.article_id);
-  if (!validator.isValidId(id)) return res.sendStatus(404);
+  let article_id = parseInt(req.params.article_id);
 
-  users.check_user_exists(id, function (err, result) {
-    if (err) {
-      log.warn(`articles-controller.deleteArticle: ${JSON.stringify(err)}`);
-      return res.sendStatus(404);
-    }
+  articles.getArticle(article_id, (err, result) => {
+    if (err === 404) return res.sendStatus(404);
+    if (err) return res.sendStatus(500);
+    return res.status(200);
+  });
 
-    let token = req.get(config.get("authToken"));
-    users.getIdFromToken(token, function (err, _id) {
-      if (err) {
-        log.warn(`articles-controller.deleteArticle: ${JSON.stringify(err)}`);
-        return res.sendStatus(500);
-      }
-
-      articles.deleteArticle(_id, id, function (err) {
-        if (err) {
-          log.warn(`articles-controller.deleteArticle: ${JSON.stringify(err)}`);
-          return res.sendStatus(500);
-        }
-
-        return res.sendStatus(200);
-      });
-    });
+  articles.deleteArticle(article_id, (err, id) => {
+    if (err === 404) return res.sendStatus(404);
+    if (err) return res.sendStatus(500);
+    return res.sendStatus(200).send("Article deleted");
   });
 };
 

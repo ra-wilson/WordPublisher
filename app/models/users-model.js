@@ -1,9 +1,10 @@
-// const { doesNotThrow } = require("assert");
+const { doesNotThrow } = require("assert");
 const crypto = require("crypto");
+const auth = require("../lib/middleware");
 
-const db = require("../../database");
+const db = require("../../database.js");
 
-const getHash = function (password, salt) {
+const getHash = function(password, salt) {
   console.log(password);
   return crypto
     .pbkdf2Sync(password, salt, 100000, 256, "sha256")
@@ -16,7 +17,7 @@ const create = (user, done) => {
   const hash = getHash(user.password, salt);
 
   const sql =
-    "INSERT INTO users (first_name, last_name, email, password, salt) VALUES (:first_name, :last_name, :email, :password, :salt)";
+    "INSERT INTO users (first_name, last_name, email, password, salt) VALUES (?,?,?,?,?)";
   let values = [
     user.first_name,
     user.last_name,
@@ -52,13 +53,19 @@ const authenticateUser = (email, password, done) => {
 };
 
 const getToken = (id, done) => {
-  const sql = "SELECT session_token FROM users WHERE user_id =?";
+  
 
-  db.get(sql, [id], (err, row) => {
-    if (err) return done(err);
-
-    return done(false, row.session_token);
-  });
+  db.get(
+    "SELECT session_token FROM users WHERE user_id =?",
+    [id],
+    function (err, row){
+      if(row && row.session_token){
+        return done(null, row.session_token);
+      }
+      else{
+    return done(null, null);
+      }
+  })
 };
 
 const setToken = (id, done) => {
@@ -67,29 +74,55 @@ const setToken = (id, done) => {
   const sql = "UPDATE users SET session_token =? WHERE user_id =?";
 
   db.run(sql, [token, id], (err) => {
-    return done(err, token);
+    "UPDATE users SET session_token =? WHERE user_id =?"
+    {return done(err, token)};
   });
 };
 
-const removeToken = (Token, done) => {
-  const sql = "UPDATE9 users SET session_token =null WHERE session_token=?";
-};
+const removeToken = (token, done) => {
+  if (token === undefined || token === null) {
+    return true, null;
+  } 
+  let query = "UPDATE users SET session_token =null WHERE session_token=" + token;
 
-const getIdFromToken = (Token, done) => {
-  const sql = "SELECT user_id FROM users WHERE session_token=?";
-  const params = [token];
-};
-
-const isAuthenticated = function (req, res, next) {
-  let token = req.get("X-Authorization");
-
-  users.getIdFromToken(token, (err, id) => {
-    if (err || id === null) {
-      return res.sendStatus(401);
-    }
-    next();
+  db.run(query, function (err, result) {
+    if (err) return done(err);
+    return done(null, "Logged out");
   });
 };
+
+
+const getIdFromToken = (token, done) => {
+  if (token === undefined || token === null) {
+    return done(true, null);
+  } else {
+    db.get(
+      "SELECT user_id FROM users WHERE session_token=?",
+      [token],
+      function (err, row) {
+        if(err) return done(err);
+        if(!row) return done(404);
+
+        return done(null, row.user_id);
+
+        // if (row) return done(null, row.user_id);
+        // console.log(err);
+        // return done(null);
+      }
+    );
+  }
+};
+
+// const isAuthenticated = function (req, res, next) {
+//   let token = req.get("X-Authorization");
+
+//   users.getIdFromToken(token, (err, id) => {
+//     if (err || id === null) {
+//       return res.sendStatus(401);
+//     }
+//     next();
+//   });
+// };
 
 const getAllUsers = (done) => {
   const results = [];
@@ -100,10 +133,10 @@ const getAllUsers = (done) => {
     (err, row) => {
       if (err) console.log("Something isn't right" + err);
       results.push({
-        user_id: user_id,
-        first_name: first_name,
-        last_name: last_name,
-        email: email,
+        user_id: row.user_id,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        email: row.email,
       });
     },
     (err, num_rows) => {
@@ -114,7 +147,7 @@ const getAllUsers = (done) => {
 
 const users = (module.exports = {
   create: create,
-  isAuthenticated: isAuthenticated,
+  //   isAuthenticated: isAuthenticated,
   getIdFromToken: getIdFromToken,
   authenticateUser: authenticateUser,
   setToken: setToken,

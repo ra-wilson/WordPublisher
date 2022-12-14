@@ -1,6 +1,8 @@
-const { isBuffer } = require("util");
+// const { isBuffer } = require("util");
 const db = require("../../database.js");
 const Joi = require("joi");
+const auth = require("../lib/middleware");
+const comment = require("../models/comments-model.js");
 
 const { doesNotThrow } = require("assert");
 
@@ -49,13 +51,13 @@ const getAllArticles = (done) => {
 };
 
 const getArticle = (id, done) => {
-  const sql = "SELECT * FROM articles WHERE ID = ?";
+  const sql = "SELECT * FROM articles WHERE article_id=?";
 
   db.get(sql, [id], (err, row) => {
     if (err) return done(err);
     if (!row) return done(404);
 
-    result.push({
+    return done(null, {
       article_id: row.article_id,
       title: row.title,
       author: row.author,
@@ -67,24 +69,24 @@ const getArticle = (id, done) => {
 };
 
 const editArticle = (id, article, done) => {
-  const sql = "UPDATE article FROM articles WHERE ID = ?";
+  const sql =
+    "UPDATE articles SET title=?, author=?, article_text=? WHERE article_id=?";
 
   let values = [article.title, article.author, article.article_text, id];
   db.run(sql, values, function (err) {
     if (err) return done(err);
+
+    return done(null, this.lastID, "Article successfully updated");
   });
 };
 
 const deleteArticle = (id, article, done) => {
-  if (article_id === undefined || article_id === null) {
-    return done("Invalid Parameters", null);
-  }
+  const sql = "DELETE FROM articles WHERE article_id=?";
 
-  let query = "DELETE FROM articles WHERE article_id=" + article_id;
-
-  db.run(query, function (err, result) {
+  db.run(sql, function (err) {
     if (err) return done(err);
-    return done(null);
+    console.log("Successfully deleted");
+    return done(null, "Article successfully deleted");
   });
 };
 
