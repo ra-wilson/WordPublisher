@@ -91,14 +91,14 @@ const deleteArticle = (req, res, next) => {
   articles.getArticle(article_id, (err, result) => {
     if (err === 404) return res.sendStatus(404);
     if (err) return res.sendStatus(500);
-    return res.status(200);
+
+
+    articles.deleteArticle(article_id, (err) => {
+      if (err) return res.sendStatus(500);
+      return res.sendStatus(200);
+    });
   });
 
-  articles.deleteArticle(article_id, (err, id) => {
-    if (err === 404) return res.sendStatus(404);
-    if (err) return res.sendStatus(500);
-    return res.sendStatus(200).send("Article deleted");
-  });
 };
 
 module.exports = {

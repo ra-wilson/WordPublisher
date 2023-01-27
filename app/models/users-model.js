@@ -12,7 +12,7 @@ const getHash = function(password, salt) {
 };
 
 const create = (user, done) => {
-  console.log(user);
+
   const salt = crypto.randomBytes(64);
   const hash = getHash(user.password, salt);
 
@@ -29,7 +29,7 @@ const create = (user, done) => {
   db.run(sql, values, function (err) {
     if (err) return done(err);
 
-    return done(false, this.lastID);
+    return done(null, this.lastID);
   });
 };
 
@@ -73,6 +73,7 @@ const setToken = (id, done) => {
 
   const sql = "UPDATE users SET session_token =? WHERE user_id =?";
 
+
   db.run(sql, [token, id], (err) => {
     "UPDATE users SET session_token =? WHERE user_id =?"
     {return done(err, token)};
@@ -80,14 +81,12 @@ const setToken = (id, done) => {
 };
 
 const removeToken = (token, done) => {
-  if (token === undefined || token === null) {
-    return true, null;
-  } 
-  let query = "UPDATE users SET session_token =null WHERE session_token=" + token;
 
-  db.run(query, function (err, result) {
-    if (err) return done(err);
-    return done(null, "Logged out");
+  let query = "UPDATE users SET session_token =null WHERE session_token=?";
+
+  db.run(query, [token], (err) => {
+ 
+    return done(err, "Logged out");
   });
 };
 
@@ -113,16 +112,6 @@ const getIdFromToken = (token, done) => {
   }
 };
 
-// const isAuthenticated = function (req, res, next) {
-//   let token = req.get("X-Authorization");
-
-//   users.getIdFromToken(token, (err, id) => {
-//     if (err || id === null) {
-//       return res.sendStatus(401);
-//     }
-//     next();
-//   });
-// };
 
 const getAllUsers = (done) => {
   const results = [];

@@ -5,7 +5,7 @@ module.exports = function(app){
 
     app.route("/articles/:article_id/comments")
     .get(comments.getAll)
-    .post(auth.isAuthenticated, comments.create)
+    .post(comments.create)
     .delete(auth.isAuthenticated, comments.deleteComment);
     
 };

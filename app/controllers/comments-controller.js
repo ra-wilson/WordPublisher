@@ -1,53 +1,65 @@
 const Joi = require("joi");
-const comment = require("../models/comments-model.js");
+const comments = require("../models/comments-model.js");
 const articles = require("../models/articles-model.js");
 
 const getAll = (req, res) => {
-  comment.getAllComments((err, num_rows, results) => {
+  let article_id = parseInt(req.params.article_id);
+  comments.getAllComments(article_id, (err, results) => {
     if (err) return res.sendStatus(500);
 
     return res.status(200).send(results);
   });
 };
 
-const create = (req, res, next) => {
+const create = (req, res) => {
   let article_id = parseInt(req.params.article_id);
 
   articles.getArticle(article_id, (err, result) => {
     if (err === 404) return res.sendStatus(404);
     if (err) return res.sendStatus(500);
-  });
 
-  console.log("here", article_id);
-  const schema = Joi.object({
-    comment_text: Joi.string().required(),
-  });
-  console.log(schema.validate(req.body));
+    const schema = Joi.object({
+      comment_text: Joi.string().required(),
+    });
 
-  const { error } = schema.validate(req.body);
+    const { error } = schema.validate(req.body);
 
-  console.log(error);
+    if (error) return res.status(400).send(error.details[0].message);
 
-  if (error) return res.status(400).send(error.details[0].message);
+    let comment = Object.assign({}, req.body);
 
-  let comment = Object.assign({}, req.body);
-
-  comment.addNewComment(comment, article_id, (err, id) => {
-    if (err) return res.sendStatus(500);
-    return res.status(201).send({ comment_id: id });
+    comments.addNewComment(comment, article_id, (err, id) => {
+      if (err) {
+        return res.sendStatus(500);
+      }
+      return res.status(201).send({ comment_id: id });
+    });
   });
 };
 
-const deleteComment = (req, res, next) => {
-  let id = parseInt(req.params.article_id);
-  if (!validator.isValidId(id)) return res.sendStatus(404);
+const getComment = (req, res) => {
+  let comment_id = parseInt(req.params.comment_id);
 
-  comment.deleteComment(comment_id, id, function (err) {
-    if (err) {
-      return res.sendStatus(500);
+  comments.getSingleComment(comment_id, (err, result) => {
+    if (err === 404) {
+      return res.sendStatus(404);
     }
+    return res.status(200).send(result);
+  });
+};
 
-    return res.sendStatus(200).send("Comment deleted");
+const deleteComment = (req, res) => {
+
+  let comment_id = parseInt(req.params.comment_id);
+
+  comments.getSingleComment(comment_id, (err, result) => {
+    if (err === 404) return res.sendStatus(404);
+    if (err) return res.sendStatus(500);
+
+    comments.deleteComment(comment_id, (err) => {
+      if (err) return res.sendStatus(500);
+      return res.sendStatus(200).send("Comment deleted");
+    });
   });
 };
 
@@ -55,4 +67,5 @@ module.exports = {
   getAll: getAll,
   create: create,
   deleteComment: deleteComment,
+  getComment: getComment,
 };

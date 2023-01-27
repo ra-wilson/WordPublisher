@@ -80,13 +80,13 @@ const editArticle = (id, article, done) => {
   });
 };
 
-const deleteArticle = (id, article, done) => {
+const deleteArticle = (id, done) => {
   const sql = "DELETE FROM articles WHERE article_id=?";
 
-  db.run(sql, function (err) {
-    if (err) return done(err);
+  db.run(sql, id, function (err) {
+    if (err) return done(err); // Call done() and pass the error as an argument
     console.log("Successfully deleted");
-    return done(null, "Article successfully deleted");
+    return done(null); // Call done() with a null argument to indicate success
   });
 };
 

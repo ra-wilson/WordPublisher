@@ -33,11 +33,10 @@ const create = (req, res) => {
       .pattern(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/)
       .required(),
   });
-  console.log(schema.validate(req.body));
+ 
 
   const { error } = schema.validate(req.body);
 
-  console.log(error, 1);
 
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -52,7 +51,7 @@ const create = (req, res) => {
   
 
   users.create(user, (error, id) => {
-    if (error) {
+    if (error === 400) {
       console.log(error, 2);
       return res.sendStatus(500);
     }
@@ -110,15 +109,13 @@ const logout = (req, res) => {
 
   users.removeToken(token, (err) => {
     if (err) {
-      console.log(err);
       return res.sendStatus(401);
-      
-    } else {
+    }
       console.log("Successfully logged out");
       return res.sendStatus(200);
     }
-  });
-};
+  )};
+
 
 module.exports = {
   authUser: authUser,
